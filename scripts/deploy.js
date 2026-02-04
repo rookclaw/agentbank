@@ -1,106 +1,143 @@
-const hre = require('hardhat');
+const { ethers } = require('ethers');
+const fs = require('fs');
+const path = require('path');
 
-// USDC addresses on testnets
-const USDC_ADDRESSES = {
-  'base-sepolia': '0x036CbD53842c5426634e7929541eC2318f3dCF7e',
-  'arbitrum-sepolia': '0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d',
-};
-
-// CCTP TokenMessenger addresses on testnets
-const CCTP_MESSENGER = {
-  'base-sepolia': '0x9f3B8679c73C2Fef8b59B4f3444d4e156fb70AA5',
-  'arbitrum-sepolia': '0x9f3B8679c73C2Fef8b59B4f3444d4e156fb70AA5',
-};
-
-async function main() {
-  const [deployer] = await hre.ethers.getSigners();
-  console.log('Deploying contracts with account:', deployer.address);
-
-  const network = hre.network.name;
-  console.log('Network:', network);
-
-  const usdcAddress = USDC_ADDRESSES[network];
-  const cctpMessenger = CCTP_MESSENGER[network];
-
-  if (!usdcAddress) {
-    throw new Error(`USDC address not configured for network: ${network}`);
-  }
-
-  console.log('USDC:', usdcAddress);
-  console.log('CCTP Messenger:', cctpMessenger);
-
-  // Deploy AgentRegistry
-  console.log('\n1. Deploying AgentRegistry...');
-  const AgentRegistry = await hre.ethers.getContractFactory('AgentRegistry');
-  const registry = await AgentRegistry.deploy();
-  await registry.waitForDeployment();
-  console.log('AgentRegistry deployed to:', await registry.getAddress());
-
-  // Deploy TreasuryRouter
-  console.log('\n2. Deploying TreasuryRouter...');
-  const TreasuryRouter = await hre.ethers.getContractFactory('TreasuryRouter');
-  const router = await TreasuryRouter.deploy(usdcAddress, cctpMessenger);
-  await router.waitForDeployment();
-  console.log('TreasuryRouter deployed to:', await router.getAddress());
-
-  // Deploy AaveYieldStrategy (simplified for hackathon)
-  console.log('\n3. Deploying AaveYieldStrategy...');
-  const AaveYieldStrategy = await hre.ethers.getContractFactory('AaveYieldStrategy');
-  // Using router address as aToken placeholder for demo
-  const yieldStrategy = await AaveYieldStrategy.deploy(
-    usdcAddress,
-    await router.getAddress(), // placeholder
-    await router.getAddress()
-  );
-  await yieldStrategy.waitForDeployment();
-  console.log('AaveYieldStrategy deployed to:', await yieldStrategy.getAddress());
-
-  // Deploy YieldOptimizer
-  console.log('\n4. Deploying YieldOptimizer...');
-  const YieldOptimizer = await hre.ethers.getContractFactory('YieldOptimizer');
-  const optimizer = await YieldOptimizer.deploy();
-  await optimizer.waitForDeployment();
-  console.log('YieldOptimizer deployed to:', await optimizer.getAddress());
-
-  // Add strategy to optimizer
-  console.log('\n5. Adding strategy to optimizer...');
-  await optimizer.addStrategy(await yieldStrategy.getAddress(), 450, 3); // 4.5% APY, low risk
-  console.log('Strategy added');
-
-  console.log('\n✅ All contracts deployed!');
-  console.log('\nContract Addresses:');
-  console.log('===================');
-  console.log(`AgentRegistry: ${await registry.getAddress()}`);
-  console.log(`TreasuryRouter: ${await router.getAddress()}`);
-  console.log(`AaveYieldStrategy: ${await yieldStrategy.getAddress()}`);
-  console.log(`YieldOptimizer: ${await optimizer.getAddress()}`);
-
-  // Save deployment info
-  const deploymentInfo = {
-    network,
-    deployer: deployer.address,
-    contracts: {
-      AgentRegistry: await registry.getAddress(),
-      TreasuryRouter: await router.getAddress(),
-      AaveYieldStrategy: await yieldStrategy.getAddress(),
-      YieldOptimizer: await optimizer.getAddress(),
-    },
-    usdc: usdcAddress,
-    cctpMessenger: cctpMessenger,
-    timestamp: new Date().toISOString(),
-  };
-
-  const fs = require('fs');
-  fs.writeFileSync(
-    `deployment-${network}.json`,
-    JSON.stringify(deploymentInfo, null, 2)
-  );
-  console.log(`\nDeployment info saved to deployment-${network}.json`);
+// Load compiled contracts
+function loadContract(name) {
+  const buildPath = path.join(__dirname, '..', 'build', `${name}.json`);
+  return JSON.parse(fs.readFileSync(buildPath, 'utf8'));
 }
 
-main()
-  .then(() => process.exit(0))
-  .catch((error) => {
-    console.error(error);
+// Testnet configuration
+const NETWORKS = {
+  'base-sepolia': {
+    chainId: 84532,
+    rpc: process.env.BASE_SEPOLIA_RPC || 'https://base-sepolia.blockpi.network/v1/rpc/public',
+    usdc: '0x036CbD53842c5426634e7929541eC2318f3dCF7e',
+    explorer: 'https://sepolia.basescan.org',
+  },
+  'arbitrum-sepolia': {
+    chainId: 421614,
+    rpc: process.env.ARBITRUM_SEPOLIA_RPC || 'https://arbitrum-sepolia.blockpi.network/v1/rpc/public',
+    usdc: '0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d',
+    explorer: 'https://sepolia.arbiscan.io',
+  },
+};
+
+async function deployToNetwork(networkName) {
+  const network = NETWORKS[networkName];
+  if (!network) {
+    throw new Error(`Unknown network: ${networkName}`);
+  }
+
+  console.log(`\n🌐 Deploying to ${networkName}...`);
+  console.log('='.repeat(60));
+
+  // Setup provider and wallet
+  const provider = new ethers.providers.JsonRpcProvider(network.rpc);
+  
+  if (!process.env.PRIVATE_KEY) {
+    console.error('❌ PRIVATE_KEY environment variable not set');
+    console.log('\nTo set it:');
+    console.log('  $env:PRIVATE_KEY = "0x..."');
+    return null;
+  }
+  
+  const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
+  console.log(`Deployer: ${wallet.address}`);
+
+  // Check balance
+  const balance = await provider.getBalance(wallet.address);
+  console.log(`Balance: ${ethers.utils.formatEther(balance)} ETH`);
+
+  if (balance.lt(ethers.utils.parseEther('0.001'))) {
+    console.error('❌ Insufficient balance for deployment');
+    console.log(`Get testnet ETH from: https://www.alchemy.com/faucets/${networkName.replace('-', '-')}`);
+    return null;
+  }
+
+  // Load contracts
+  const TreasuryRouter = loadContract('TreasuryRouter');
+  const AgentRegistry = loadContract('AgentRegistry');
+  const YieldStrategy = loadContract('YieldStrategy');
+
+  const deployments = {
+    network: networkName,
+    deployer: wallet.address,
+    contracts: {},
+  };
+
+  try {
+    // Deploy TreasuryRouter
+    console.log('\n📄 Deploying TreasuryRouter...');
+    const routerFactory = new ethers.ContractFactory(
+      TreasuryRouter.abi,
+      TreasuryRouter.bytecode,
+      wallet
+    );
+    const router = await routerFactory.deploy(network.usdc);
+    await router.deployed();
+    console.log(`   ✅ TreasuryRouter: ${router.address}`);
+    console.log(`   📝 ${network.explorer}/address/${router.address}`);
+    deployments.contracts.TreasuryRouter = router.address;
+
+    // Deploy AgentRegistry
+    console.log('\n📄 Deploying AgentRegistry...');
+    const registryFactory = new ethers.ContractFactory(
+      AgentRegistry.abi,
+      AgentRegistry.bytecode,
+      wallet
+    );
+    const registry = await registryFactory.deploy();
+    await registry.deployed();
+    console.log(`   ✅ AgentRegistry: ${registry.address}`);
+    console.log(`   📝 ${network.explorer}/address/${registry.address}`);
+    deployments.contracts.AgentRegistry = registry.address;
+
+    // Deploy YieldStrategy
+    console.log('\n📄 Deploying YieldStrategy...');
+    const strategyFactory = new ethers.ContractFactory(
+      YieldStrategy.abi,
+      YieldStrategy.bytecode,
+      wallet
+    );
+    const strategy = await strategyFactory.deploy(network.usdc);
+    await strategy.deployed();
+    console.log(`   ✅ YieldStrategy: ${strategy.address}`);
+    console.log(`   📝 ${network.explorer}/address/${strategy.address}`);
+    deployments.contracts.YieldStrategy = strategy.address;
+
+    // Save deployment info
+    const deploymentPath = path.join(__dirname, '..', `deployment-${networkName}.json`);
+    fs.writeFileSync(deploymentPath, JSON.stringify(deployments, null, 2));
+    console.log(`\n💾 Deployment saved to: deployment-${networkName}.json`);
+
+    return deployments;
+
+  } catch (error) {
+    console.error(`\n❌ Deployment failed: ${error.message}`);
+    return null;
+  }
+}
+
+async function main() {
+  const targetNetwork = process.argv[2] || 'base-sepolia';
+  
+  console.log('╔═══════════════════════════════════════════════════════════╗');
+  console.log('║              AGENTBANK DEPLOYMENT                         ║');
+  console.log('║          Autonomous Cross-Chain Treasury                  ║');
+  console.log('╚═══════════════════════════════════════════════════════════╝');
+
+  const result = await deployToNetwork(targetNetwork);
+  
+  if (result) {
+    console.log('\n✨ Deployment successful!');
+    console.log('\nUpdate your skill/config.json with these addresses:');
+    console.log(JSON.stringify(result.contracts, null, 2));
+  } else {
+    console.log('\n❌ Deployment failed. Check errors above.');
     process.exit(1);
-  });
+  }
+}
+
+main().catch(console.error);
