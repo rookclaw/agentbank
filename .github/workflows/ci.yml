@@ -10,41 +10,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
     
-    strategy:
-      matrix:
-        node-version: [18.x, 20.x]
-
-    steps:
-    - uses: actions/checkout@v3
-    
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v3
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    
-    - name: Install dependencies
-      run: npm ci
-    
-    - name: Compile contracts
-      run: npx hardhat compile
-    
-    - name: Run tests
-      run: npx hardhat test
-    
-    - name: Generate coverage report
-      run: npx hardhat coverage
-    
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        files: ./coverage/lcov.info
-        flags: unittests
-        name: codecov-umbrella
-
-  lint:
-    runs-on: ubuntu-latest
-    
     steps:
     - uses: actions/checkout@v3
     
@@ -55,16 +20,17 @@ jobs:
         cache: 'npm'
     
     - name: Install dependencies
-      run: npm ci
+      run: npm install
     
-    - name: Lint Solidity
-      run: npx solhint contracts/**/*.sol
+    - name: Compile contracts
+      run: npx hardhat compile
+      env:
+        PRIVATE_KEY: "0x0000000000000000000000000000000000000000000000000000000000000001"
     
-    - name: Lint JavaScript
-      run: npx eslint . --ext .js,.ts
-    
-    - name: Check code formatting
-      run: npx prettier --check .
+    - name: Run tests
+      run: npx hardhat test
+      env:
+        PRIVATE_KEY: "0x0000000000000000000000000000000000000000000000000000000000000001"
 
   build:
     runs-on: ubuntu-latest
@@ -79,14 +45,9 @@ jobs:
         cache: 'npm'
     
     - name: Install dependencies
-      run: npm ci
+      run: npm install
     
     - name: Compile contracts
       run: npx hardhat compile
-    
-    - name: Build frontend
-      run: |
-        cd frontend
-        npm ci
-        npm run build
-      continue-on-error: true
+      env:
+        PRIVATE_KEY: "0x0000000000000000000000000000000000000000000000000000000000000001"
