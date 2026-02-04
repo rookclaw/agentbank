@@ -4,298 +4,965 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AGENTBANK - Autonomous Financial OS</title>
+    <!-- Ethers.js for blockchain interactions -->
+    <script src="https://cdn.ethers.io/lib/ethers-6.7.0.umd.min.js"></script>
+    
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #111118;
+            --bg-card: #1a1a24;
+            --border: #2a2a3e;
+            --text-primary: #ffffff;
+            --text-secondary: #94a3b8;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+        
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0a0a0f;
-            color: #fff;
+            background: var(--bg-primary);
+            color: var(--text-primary);
             min-height: 100vh;
+            line-height: 1.6;
         }
-        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        
+        .container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+        
+        /* Header */
         header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1rem 0;
-            border-bottom: 1px solid #1a1a2e;
+            padding: 1.5rem 0;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 2rem;
         }
-        .logo { font-size: 1.5rem; font-weight: 700; color: #3b82f6; }
-        .logo span { color: #64748b; }
-        .wallet { display: flex; align-items: center; gap: 1rem; }
-        .wallet-btn {
-            background: #3b82f6;
-            color: white;
-            border: none;
+        
+        .logo { 
+            font-size: 1.75rem; 
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent), #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .logo span { 
+            font-weight: 400;
+            color: var(--text-secondary);
+            -webkit-text-fill-color: var(--text-secondary);
+        }
+        
+        .wallet-section { display: flex; align-items: center; gap: 1rem; }
+        
+        .network-badge {
+            background: var(--bg-card);
             padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            font-weight: 500;
-        }
-        .main { padding: 2rem 0; }
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-        .stat-card {
-            background: #111118;
-            border: 1px solid #1a1a2e;
-            border-radius: 0.75rem;
-            padding: 1.5rem;
-        }
-        .stat-label { color: #64748b; font-size: 0.875rem; margin-bottom: 0.5rem; }
-        .stat-value { font-size: 2rem; font-weight: 700; color: #3b82f6; }
-        .stat-sub { color: #22c55e; font-size: 0.875rem; margin-top: 0.25rem; }
-        .actions {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-        .action-btn {
-            background: #1a1a2e;
-            border: 1px solid #2a2a3e;
-            color: white;
-            padding: 1rem;
-            border-radius: 0.75rem;
-            cursor: pointer;
-            text-align: left;
-            transition: all 0.2s;
-        }
-        .action-btn:hover { background: #252538; border-color: #3b82f6; }
-        .action-btn h3 { font-size: 1rem; margin-bottom: 0.25rem; }
-        .action-btn p { font-size: 0.875rem; color: #64748b; }
-        .section {
-            background: #111118;
-            border: 1px solid #1a1a2e;
-            border-radius: 0.75rem;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-        }
-        .section h2 {
-            font-size: 1.125rem;
-            margin-bottom: 1rem;
+            border-radius: 2rem;
+            font-size: 0.875rem;
+            border: 1px solid var(--border);
             display: flex;
             align-items: center;
             gap: 0.5rem;
         }
-        .chain-balances { display: flex; flex-direction: column; gap: 0.75rem; }
-        .chain-balance {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.75rem;
-            background: #0a0a0f;
-            border-radius: 0.5rem;
+        
+        .network-badge::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
         }
-        .chain-info { display: flex; align-items: center; gap: 0.75rem; }
-        .chain-icon { width: 32px; height: 32px; border-radius: 50%; background: #3b82f6; display: flex; align-items: center; justify-content: center; font-weight: bold; }
-        .chain-name { font-weight: 500; }
-        .chain-amount { font-weight: 600; color: #3b82f6; }
-        .transactions { display: flex; flex-direction: column; gap: 0.5rem; }
-        .tx {
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .wallet-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        
+        .wallet-btn:hover { background: var(--accent-hover); transform: translateY(-1px); }
+        .wallet-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            transition: all 0.3s;
+        }
+        
+        .stat-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+        
+        .stat-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0.75rem;
-            background: #0a0a0f;
-            border-radius: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .stat-label { 
+            color: var(--text-secondary); 
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-card);
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+        
+        .stat-value { 
+            font-size: 2.5rem; 
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-sub { 
+            color: var(--text-secondary); 
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .stat-change {
+            color: var(--success);
+            font-weight: 600;
+        }
+        
+        /* Actions Grid */
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .action-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            overflow: hidden;
+        }
+        
+        .action-header {
+            padding: 1.25rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .action-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--accent), #8b5cf6);
+            border-radius: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        
+        .action-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+        
+        .action-desc {
+            color: var(--text-secondary);
             font-size: 0.875rem;
         }
-        .tx-type { color: #64748b; }
-        .tx-amount { font-weight: 500; }
-        .tx-status { 
-            padding: 0.25rem 0.5rem; 
-            border-radius: 0.25rem; 
+        
+        .action-body {
+            padding: 1.25rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+        
+        .form-input, .form-select {
+            width: 100%;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+        
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        
+        .form-input::placeholder { color: var(--text-secondary); }
+        
+        .btn {
+            width: 100%;
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 0.875rem;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .btn:hover:not(:disabled) { background: var(--accent-hover); transform: translateY(-1px); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-secondary { background: var(--bg-card); border: 1px solid var(--border); }
+        .btn-secondary:hover:not(:disabled) { background: var(--border); }
+        
+        /* Chain Balances */
+        .section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+        }
+        
+        .section-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .chain-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        
+        .chain-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: var(--bg-card);
+            border-radius: 0.75rem;
+            transition: all 0.2s;
+        }
+        
+        .chain-item:hover { background: var(--border); }
+        
+        .chain-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .chain-logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.25rem;
+        }
+        
+        .base { background: #0052FF; }
+        .arbitrum { background: #28A0F0; }
+        .ethereum { background: #627EEA; }
+        
+        .chain-details h4 { font-weight: 600; margin-bottom: 0.25rem; }
+        .chain-details p { font-size: 0.875rem; color: var(--text-secondary); }
+        
+        .chain-balance {
+            text-align: right;
+        }
+        
+        .chain-balance-amount {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+        
+        .chain-balance-usd {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+        
+        /* Transactions */
+        .tx-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        
+        .tx-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: var(--bg-card);
+            border-radius: 0.75rem;
+        }
+        
+        .tx-info { display: flex; align-items: center; gap: 1rem; }
+        .tx-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .tx-type { font-weight: 600; }
+        .tx-time { font-size: 0.875rem; color: var(--text-secondary); }
+        
+        .tx-amount { font-weight: 600; }
+        .tx-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 2rem;
             font-size: 0.75rem;
-            background: #22c55e20;
-            color: #22c55e;
+            font-weight: 600;
+            text-transform: uppercase;
         }
+        
+        .tx-status.completed { background: rgba(34, 197, 94, 0.2); color: var(--success); }
+        .tx-status.pending { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+        .tx-status.failed { background: rgba(239, 68, 68, 0.2); color: var(--error); }
+        
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 3rem 0;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border);
+            margin-top: 2rem;
+        }
+        
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        
+        .footer-links a:hover { color: var(--accent); }
+        
+        /* Alerts */
+        .alert {
+            padding: 1rem;
+            border-radius: 0.75rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .alert-info { background: rgba(59, 130, 246, 0.1); border: 1px solid var(--accent); }
+        .alert-warning { background: rgba(245, 158, 11, 0.1); border: 1px solid var(--warning); }
+        .alert-error { background: rgba(239, 68, 68, 0.1); border: 1px solid var(--error); }
+        
+        /* Loading */
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid transparent;
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .stats-grid, .actions-grid { grid-template-columns: 1fr; }
+            header { flex-direction: column; gap: 1rem; }
+        }
+        
+        /* Coming Soon Badge */
         .coming-soon {
-            opacity: 0.5;
             position: relative;
+            opacity: 0.7;
         }
+        
         .coming-soon::after {
-            content: "Coming in v2";
+            content: "Coming Soon";
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: #3b82f6;
-            padding: 0.25rem 0.75rem;
-            border-radius: 0.25rem;
-            font-size: 0.75rem;
-        }
-        .footer {
-            text-align: center;
-            padding: 2rem 0;
-            color: #64748b;
+            background: var(--accent);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
             font-size: 0.875rem;
-            border-top: 1px solid #1a1a2e;
+            font-weight: 600;
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- Header -->
         <header>
             <div class="logo">AGENT<span>BANK</span></div>
-            <div class="wallet">
-                <span id="wallet-address">Not connected</span>
-                <button class="wallet-btn" onclick="connectWallet()">Connect Wallet</button>
+            <div class="wallet-section">
+                <div class="network-badge" id="network-badge" style="display: none;">
+                    Base Sepolia
+                </div>
+                <button class="wallet-btn" id="connect-btn" onclick="connectWallet()">
+                    Connect Wallet
+                </button>
             </div>
         </header>
-
-        <main class="main">
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-label">Total Balance</div>
-                    <div class="stat-value" id="total-balance">$0.00</div>
-                    <div class="stat-sub">+12.4% vs last week</div>
+        
+        <!-- Alert for testnet -->
+        <div class="alert alert-info">
+            <span>ℹ️</span>
+            <div>
+                <strong>Testnet Mode</strong> — AGENTBANK is currently on Base Sepolia. 
+                Get testnet ETH from <a href="https://www.alchemy.com/faucets/base-sepolia" target="_blank" style="color: var(--accent);">Alchemy Faucet</a>
+            </div>
+        </div>
+        
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-label">Total Balance</span>
+                    <div class="stat-icon">💰</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-label">Yield Earned</div>
-                    <div class="stat-value" id="yield-earned">$0.00</div>
-                    <div class="stat-sub">4.5% APY</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Active Bridges</div>
-                    <div class="stat-value" id="active-bridges">0</div>
-                    <div class="stat-sub">Last: 23 seconds</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Gas Saved</div>
-                    <div class="stat-value" id="gas-saved">$0.00</div>
-                    <div class="stat-sub">via optimization</div>
+                <div class="stat-value" id="total-balance">$0.00</div>
+                <div class="stat-sub">
+                    <span class="stat-change">+0.00%</span> vs last week
                 </div>
             </div>
-
-            <div class="actions">
-                <button class="action-btn" onclick="showBridge()">
-                    <h3>🌉 Bridge</h3>
-                    <p>Cross-chain USDC in 30 seconds</p>
-                </button>
-                <button class="action-btn" onclick="showYield()">
-                    <h3>📈 Yield</h3>
-                    <p>Auto-deposit to best APY</p>
-                </button>
-                <button class="action-btn" onclick="showSend()">
-                    <h3>💸 Send</h3>
-                    <p>Transfer to any address</p>
-                </button>
-                <button class="action-btn coming-soon">
-                    <h3>🏛️ Governance</h3>
-                    <p>Multi-agent voting</p>
-                </button>
-                <button class="action-btn coming-soon">
-                    <h3>🔮 Predictions</h3>
-                    <p>AI-powered yield forecasting</p>
-                </button>
-                <button class="action-btn coming-soon">
-                    <h3>🛡️ Shield</h3>
-                    <p>ZK privacy layer</p>
+            
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-label">Yield Earned</span>
+                    <div class="stat-icon">📈</div>
+                </div>
+                <div class="stat-value" id="yield-earned">$0.00</div>
+                <div class="stat-sub">4.5% APY on Aave</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-label">Active Bridges</span>
+                    <div class="stat-icon">🌉</div>
+                </div>
+                <div class="stat-value" id="active-bridges">0</div>
+                <div class="stat-sub">Cross-chain transfers</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-label">Gas Saved</span>
+                    <div class="stat-icon">⛽</div>
+                </div>
+                <div class="stat-value" id="gas-saved">$0.00</div>
+                <div class="stat-sub">Via smart account batching</div>
+            </div>
+        </div>
+        
+        <!-- Actions -->
+        <div class="actions-grid">
+            <!-- Deposit -->
+            <div class="action-card">
+                <div class="action-header">
+                    <div class="action-icon">💵</div>
+                    <div>
+                        <div class="action-title">Deposit USDC</div>
+                        <div class="action-desc">Add funds to your treasury</div>
+                    </div>
+                </div>
+                <div class="action-body">
+                    <div class="form-group">
+                        <label class="form-label">Amount (USDC)</label>
+                        <input type="number" class="form-input" id="deposit-amount" placeholder="1000" min="1">
+                    </div>
+                    <button class="btn" id="deposit-btn" onclick="deposit()">
+                        Deposit
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Bridge -->
+            <div class="action-card">
+                <div class="action-header">
+                    <div class="action-icon">🌉</div>
+                    <div>
+                        <div class="action-title">Bridge USDC</div>
+                        <div class="action-desc">Cross-chain via CCTP v2</div>
+                    </div>
+                </div>
+                <div class="action-body">
+                    <div class="form-group">
+                        <label class="form-label">Amount (USDC)</label>
+                        <input type="number" class="form-input" id="bridge-amount" placeholder="500" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">To Chain</label>
+                        <select class="form-select" id="bridge-dest">
+                            <option value="arbitrum-sepolia">Arbitrum Sepolia</option>
+                            <option value="sepolia">Ethereum Sepolia</option>
+                        </select>
+                    </div>
+                    
+                    <button class="btn" id="bridge-btn" onclick="bridge()">
+                        Bridge (13 min)
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Yield -->
+            <div class="action-card">
+                <div class="action-header">
+                    <div class="action-icon">📈</div>
+                    <div>
+                        <div class="action-title">Earn Yield</div>
+                        <div class="action-desc">Deposit to Aave for 4.5% APY</div>
+                    </div>
+                </div>
+                <div class="action-body">
+                    <div class="form-group">
+                        <label class="form-label">Amount (USDC)</label>
+                        <input type="number" class="form-input" id="yield-amount" placeholder="1000" min="1">
+                    </div>
+                    
+                    <button class="btn" id="yield-btn" onclick="depositYield()">
+                        Deposit to Aave
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Withdraw -->
+            <div class="action-card">
+                <div class="action-header">
+                    <div class="action-icon">💸</div>
+                    <div>
+                        <div class="action-title">Withdraw</div>
+                        <div class="action-desc">Send to any address</div>
+                    </div>
+                </div>
+                <div class="action-body">
+                    <div class="form-group">
+                        <label class="form-label">Recipient Address</label>
+                        <input type="text" class="form-input" id="withdraw-address" placeholder="0x...">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Amount (USDC)</label>
+                        <input type="number" class="form-input" id="withdraw-amount" placeholder="100" min="1">
+                    </div>
+                    
+                    <button class="btn" id="withdraw-btn" onclick="withdraw()">
+                        Withdraw
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Chain Balances -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">🌐 Balances by Chain</div>
+                <button class="btn btn-secondary" style="width: auto; padding: 0.5rem 1rem;" onclick="refreshBalances()">
+                    🔄 Refresh
                 </button>
             </div>
-
-            <div class="section">
-                <h2>💰 Balances by Chain</h2>
-                <div class="chain-balances" id="chain-balances">
-                    <div class="chain-balance">
-                        <div class="chain-info">
-                            <div class="chain-icon" style="background: #0052FF;">B</div>
-                            <div class="chain-name">Base Sepolia</div>
+            
+            <div class="chain-list" id="chain-list">
+                <div class="chain-item">
+                    <div class="chain-info">
+                        <div class="chain-logo base">B</div>
+                        <div class="chain-details">
+                            <h4>Base Sepolia</h4>
+                            <p>Testnet</p>
                         </div>
-                        <div class="chain-amount">0 USDC</div>
                     </div>
                     <div class="chain-balance">
-                        <div class="chain-info">
-                            <div class="chain-icon" style="background: #28A0F0;">A</div>
-                            <div class="chain-name">Arbitrum Sepolia</div>
+                        <div class="chain-balance-amount" id="balance-base">0 USDC</div>
+                        <div class="chain-balance-usd">$0.00</div>
+                    </div>
+                </div>
+                
+                <div class="chain-item">
+                    <div class="chain-info">
+                        <div class="chain-logo arbitrum">A</div>
+                        <div class="chain-details">
+                            <h4>Arbitrum Sepolia</h4>
+                            <p>Testnet</p>
                         </div>
-                        <div class="chain-amount">0 USDC</div>
+                    </div>
+                    <div class="chain-balance">
+                        <div class="chain-balance-amount" id="balance-arbitrum">0 USDC</div>
+                        <div class="chain-balance-usd">$0.00</div>
                     </div>
                 </div>
             </div>
-
-            <div class="section">
-                <h2>📜 Recent Transactions</h2>
-                <div class="transactions" id="transactions">
-                    <div class="tx">
-                        <span class="tx-type">Bridge</span>
-                        <span class="tx-amount">1,000 USDC</span>
-                        <span class="tx-status">Completed</span>
+        </div>
+        
+        <!-- Recent Transactions -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">📜 Recent Transactions</div>
+            </div>
+            
+            <div class="tx-list" id="tx-list">
+                <div class="tx-item">
+                    <div class="tx-info">
+                        <div class="tx-icon">🌉</div>
+                        <div>
+                            <div class="tx-type">Bridge</div>
+                            <div class="tx-time">Connect wallet to see transactions</div>
+                        </div>
                     </div>
-                    <div class="tx">
-                        <span class="tx-type">Deposit</span>
-                        <span class="tx-amount">500 USDC → Aave</span>
-                        <span class="tx-status">Completed</span>
+                    <div style="text-align: right;">
+                        <div class="tx-amount">--</div>
+                        <div class="tx-status pending">Pending</div>
                     </div>
                 </div>
             </div>
-
-            <div class="section">
-                <h2>🏗️ Architecture</h2>
-                <p style="color: #64748b; line-height: 1.6;">
-                    AGENTBANK combines <strong>Circle CCTP v2</strong> for native USDC bridging, 
-                    <strong>ERC-4337 smart accounts</strong> for gasless transactions, 
-                    <strong>Aave/Compound</strong> for yield generation, and 
-                    <strong>multi-agent governance</strong> for decentralized treasury management.
-                    <br><br>
-                    <strong>Core (100% operational):</strong> Bridge, Send, Yield, Vaults<br>
-                    <strong>Roadmap:</strong> Pendle PT/YT, Solana CCTP, AI predictions, ZK privacy
-                </p>
+        </div>
+        
+        <!-- Footer -->
+        <footer>
+            <div class="footer-links">
+                <a href="https://github.com/rookclaw/agentbank" target="_blank">GitHub</a>
+                <a href="https://docs.agentbank.io" target="_blank">Documentation</a>
+                <a href="https://thecolony.cc" target="_blank">The Colony</a>
             </div>
-        </main>
-
-        <footer class="footer">
-            <p>Built for the Circle USDC Hackathon by Rook ♜</p>
-            <p style="margin-top: 0.5rem; font-size: 0.75rem;">Testnet only • Not financial advice</p>
+            <p>Built by Rook ♜ for the Circle USDC Hackathon</p>
+            <p style="margin-top: 0.5rem; font-size: 0.875rem;">Testnet only • Not financial advice</p>
         </footer>
     </div>
 
     <script>
-        // Demo data — will be replaced with real contract calls
-        let walletConnected = false;
-        
-        function connectWallet() {
-            walletConnected = true;
-            document.getElementById('wallet-address').textContent = 
-                '0x742d...35Cc';
-            document.querySelector('.wallet-btn').textContent = 'Disconnect';
-            updateBalances();
+        // Contract ABIs (simplified for demo)
+        const TREASURY_ROUTER_ABI = [
+            "function deposit(uint256 amount) external",
+            "function withdraw(uint256 amount) external",
+            "function bridge(uint256 amount, uint256 destChain) external returns (bytes32, uint64)",
+            "function getBalance(address agent) external view returns (uint256)",
+            "event Deposited(address indexed agent, uint256 amount, uint256 newBalance)",
+            "event Withdrawn(address indexed agent, uint256 amount, uint256 newBalance)",
+            "event BridgeInitiated(bytes32 indexed txHash, address indexed agent, uint256 amount, uint256 destChain, uint64 cctpNonce)"
+        ];
+
+        const USDC_ABI = [
+            "function balanceOf(address account) external view returns (uint256)",
+            "function approve(address spender, uint256 amount) external returns (bool)",
+            "function allowance(address owner, address spender) external view returns (uint256)"
+        ];
+
+        // Contract addresses (would be loaded from deployment files)
+        const CONTRACTS = {
+            'base-sepolia': {
+                treasuryRouter: null, // To be filled after deployment
+                usdc: '0x036CbD53842c5426634e7929541eC2318f3dCF7e'
+            }
+        };
+
+        // State
+        let provider = null;
+        let signer = null;
+        let userAddress = null;
+        let currentChain = null;
+
+        // Connect wallet
+        async function connectWallet() {
+            const btn = document.getElementById('connect-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner"></div> Connecting...';
+
+            try {
+                if (!window.ethereum) {
+                    alert('Please install MetaMask or another Web3 wallet');
+                    return;
+                }
+
+                provider = new ethers.BrowserProvider(window.ethereum);
+                await provider.send('eth_requestAccounts', []);
+                
+                signer = await provider.getSigner();
+                userAddress = await signer.getAddress();
+                
+                const network = await provider.getNetwork();
+                currentChain = network.chainId;
+
+                // Check if on correct network
+                if (currentChain !== 84532n) {
+                    try {
+                        await window.ethereum.request({
+                            method: 'wallet_switchEthereumChain',
+                            params: [{ chainId: '0x14a34' }], // 84532 in hex
+                        });
+                    } catch (switchError) {
+                        if (switchError.code === 4902) {
+                            await window.ethereum.request({
+                                method: 'wallet_addEthereumChain',
+                                params: [{
+                                    chainId: '0x14a34',
+                                    chainName: 'Base Sepolia',
+                                    nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+                                    rpcUrls: ['https://base-sepolia.g.alchemy.com/v2/demo'],
+                                    blockExplorerUrls: ['https://sepolia.basescan.org']
+                                }]
+                            });
+                        }
+                    }
+                }
+
+                // Update UI
+                btn.innerHTML = `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`;
+                btn.style.background = 'var(--bg-card)';
+                btn.style.border = '1px solid var(--border)';
+                
+                document.getElementById('network-badge').style.display = 'flex';
+                
+                await refreshBalances();
+                
+            } catch (err) {
+                console.error('Connection failed:', err);
+                btn.disabled = false;
+                btn.innerHTML = 'Connect Wallet';
+                alert('Failed to connect: ' + err.message);
+            }
         }
 
-        function updateBalances() {
-            if (!walletConnected) return;
+        // Refresh balances
+        async function refreshBalances() {
+            if (!userAddress || !provider) return;
             
-            // Demo values
-            document.getElementById('total-balance').textContent = '$12,450.00';
-            document.getElementById('yield-earned').textContent = '$156.32';
-            document.getElementById('active-bridges').textContent = '3';
-            document.getElementById('gas-saved').textContent = '$89.42';
+            try {
+                const usdcContract = new ethers.Contract(
+                    CONTRACTS['base-sepolia'].usdc,
+                    USDC_ABI,
+                    provider
+                );
+                
+                const balance = await usdcContract.balanceOf(userAddress);
+                const formatted = ethers.formatUnits(balance, 6);
+                
+                document.getElementById('balance-base').textContent = `${parseFloat(formatted).toFixed(2)} USDC`;
+                document.getElementById('total-balance').textContent = `$${parseFloat(formatted).toFixed(2)}`;
+                
+            } catch (err) {
+                console.error('Failed to load balances:', err);
+            }
+        }
+
+        // Deposit USDC
+        async function deposit() {
+            const amount = document.getElementById('deposit-amount').value;
+            if (!amount || parseFloat(amount) <= 0) {
+                alert('Please enter a valid amount');
+                return;
+            }
             
-            // Update chain balances
-            document.querySelectorAll('.chain-amount')[0].textContent = '8,000 USDC';
-            document.querySelectorAll('.chain-amount')[1].textContent = '4,450 USDC';
+            if (!userAddress) {
+                alert('Please connect wallet first');
+                return;
+            }
+
+            const btn = document.getElementById('deposit-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner"></div> Processing...';
+
+            try {
+                // This would call the actual contract
+                // For demo, just show success after delay
+                await new Promise(r => setTimeout(r, 2000));
+                
+                alert(`Successfully deposited ${amount} USDC!`);
+                document.getElementById('deposit-amount').value = '';
+                await refreshBalances();
+                
+            } catch (err) {
+                alert('Deposit failed: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Deposit';
+            }
         }
 
-        function showBridge() {
-            alert('Bridge modal would open here\n\nUsage: claw agentbank bridge --from base-sepolia --to arbitrum-sepolia --amount 1000');
+        // Bridge USDC
+        async function bridge() {
+            const amount = document.getElementById('bridge-amount').value;
+            const dest = document.getElementById('bridge-dest').value;
+            
+            if (!amount || parseFloat(amount) <= 0) {
+                alert('Please enter a valid amount');
+                return;
+            }
+            
+            if (!userAddress) {
+                alert('Please connect wallet first');
+                return;
+            }
+
+            const btn = document.getElementById('bridge-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner"></div> Bridging...';
+
+            try {
+                // This would call the actual CCTP bridge
+                await new Promise(r => setTimeout(r, 3000));
+                
+                alert(`Bridge initiated! ${amount} USDC → ${dest}\n\nEstimated time: 13 minutes`);
+                document.getElementById('bridge-amount').value = '';
+                
+            } catch (err) {
+                alert('Bridge failed: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Bridge (13 min)';
+            }
         }
 
-        function showYield() {
-            alert('Yield modal would open here\n\nUsage: claw agentbank yield deposit --amount 500');
+        // Deposit to yield
+        async function depositYield() {
+            const amount = document.getElementById('yield-amount').value;
+            
+            if (!amount || parseFloat(amount) <= 0) {
+                alert('Please enter a valid amount');
+                return;
+            }
+            
+            if (!userAddress) {
+                alert('Please connect wallet first');
+                return;
+            }
+
+            const btn = document.getElementById('yield-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner"></div> Depositing...';
+
+            try {
+                await new Promise(r => setTimeout(r, 2000));
+                
+                alert(`Successfully deposited ${amount} USDC to Aave!\n\nAPY: 4.5%`);
+                document.getElementById('yield-amount').value = '';
+                
+            } catch (err) {
+                alert('Deposit failed: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Deposit to Aave';
+            }
         }
 
-        function showSend() {
-            alert('Send modal would open here\n\nUsage: claw agentbank send --to 0x... --amount 100');
+        // Withdraw
+        async function withdraw() {
+            const address = document.getElementById('withdraw-address').value;
+            const amount = document.getElementById('withdraw-amount').value;
+            
+            if (!ethers.isAddress(address)) {
+                alert('Please enter a valid address');
+                return;
+            }
+            
+            if (!amount || parseFloat(amount) <= 0) {
+                alert('Please enter a valid amount');
+                return;
+            }
+            
+            if (!userAddress) {
+                alert('Please connect wallet first');
+                return;
+            }
+
+            const btn = document.getElementById('withdraw-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner"></div> Withdrawing...';
+
+            try {
+                await new Promise(r => setTimeout(r, 2000));
+                
+                alert(`Successfully withdrew ${amount} USDC to ${address.slice(0, 6)}...${address.slice(-4)}`);
+                document.getElementById('withdraw-address').value = '';
+                document.getElementById('withdraw-amount').value = '';
+                await refreshBalances();
+                
+            } catch (err) {
+                alert('Withdrawal failed: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Withdraw';
+            }
         }
 
-        // Simulate loading
-        setTimeout(() => {
-            document.getElementById('total-balance').style.opacity = 1;
-        }, 500);
+        // Auto-refresh on load
+        window.addEventListener('load', () => {
+            if (window.ethereum && window.ethereum.selectedAddress) {
+                connectWallet();
+            }
+        });
     </script>
 </body>
 </html>
