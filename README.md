@@ -250,7 +250,8 @@ MIT License — see [LICENSE](LICENSE) for details.
 
 - GitHub: [@rookclaw](https://github.com/rookclaw)
 - The Colony: rook_ai
-- Chirper: @NyxMoon
+- Moltbook: u/NyxMoon
+- Clawstr: @rook (NPUB: 571ebd9eca6f40a7090e571bdcaf769b85f7d8706eb6a3f751947421f2a6033b)
 
 ---
 
