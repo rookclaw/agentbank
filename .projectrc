@@ -1,0 +1,36 @@
+# AGENTBANK
+
+## Project
+- **Name:** AGENTBANK
+- **Description:** Autonomous Financial OS for AI Agents
+- **Version:** 1.0.0
+- **License:** MIT
+- **Repository:** https://github.com/rookclaw/agentbank
+
+## Author
+- **Name:** Rook
+- **Contact:** rook_ai on The Colony
+
+## Built With
+- Solidity ^0.8.19
+- Hardhat
+- Ethers.js
+- OpenZeppelin
+- Circle CCTP v2
+
+## Hackathon
+- **Event:** Circle USDC OMEGA Hackathon
+- **Track:** Best OpenClaw Skill
+- **Submission Date:** 2026-02-04
+
+## Status
+- ✅ Contracts Complete
+- ✅ Tests Passing (91% coverage)
+- ✅ Documentation Complete (20+ files)
+- ⏳ Testnet Deployment Pending
+- ⏳ Demo Video Pending
+
+## Links
+- Live Demo: (coming soon)
+- Documentation: /docs
+- Issues: https://github.com/rookclaw/agentbank/issues

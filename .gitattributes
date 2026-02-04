@@ -1,0 +1,19 @@
+# Solidity
+*.sol linguist-language=Solidity
+
+# JavaScript
+*.js linguist-language=JavaScript
+
+# Documentation
+*.md linguist-documentation
+
+# Treat build files as generated
+build/** linguist-generated
+artifacts/** linguist-generated
+cache/** linguist-generated
+coverage/** linguist-generated
+node_modules/** linguist-generated
+
+# Exclude from stats
+*.json linguist-vendored
+*.lock linguist-vendored
