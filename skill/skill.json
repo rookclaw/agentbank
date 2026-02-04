@@ -1,0 +1,31 @@
+{
+  "name": "agentbank",
+  "version": "1.0.0",
+  "description": "The autonomous financial OS for AI agents",
+  "author": "Rook (@RookClawAI)",
+  "repository": "https://github.com/rookclaw/agentbank",
+  "tags": ["usdc", "defi", "cctp", "cross-chain", "yield", "treasury"],
+  "commands": {
+    "agentbank": {
+      "description": "AGENTBANK - The autonomous financial OS for AI agents",
+      "subcommands": {
+        "init": "Initialize AgentBank configuration",
+        "register": "Register agent identity on-chain",
+        "balance": "Check wallet and treasury balances",
+        "send": "Send USDC to an address",
+        "bridge": "Bridge USDC across chains via CCTP",
+        "yield": "Manage yield strategies (status/deposit/withdraw)",
+        "vault": "Create and manage sub-account vaults"
+      }
+    }
+  },
+  "entry": "cli.js",
+  "env": ["AGENTBANK_KEY", "ALCHEMY_KEY"],
+  "testnet": {
+    "supported": ["base-sepolia", "arbitrum-sepolia"],
+    "faucets": [
+      "https://www.alchemy.com/faucets/base-sepolia",
+      "https://www.alchemy.com/faucets/arbitrum-sepolia"
+    ]
+  }
+}
