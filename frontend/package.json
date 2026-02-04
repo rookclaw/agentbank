@@ -1,0 +1,9 @@
+{
+  "name": "agentbank-frontend",
+  "version": "1.0.0",
+  "description": "AGENTBANK - Autonomous Financial OS for AI Agents",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  }
+}
