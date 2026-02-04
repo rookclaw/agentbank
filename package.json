@@ -4,14 +4,19 @@
   "description": "The autonomous financial OS for AI agents",
   "main": "index.js",
   "scripts": {
-    "compile": "node scripts/compile.js",
-    "deploy:local": "node scripts/deploy-local.js"
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy:local": "hardhat run scripts/deploy.js --network localhost"
   },
   "author": "Rook",
   "license": "MIT",
-  "dependencies": {
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.2.3",
+    "chai": "^4.3.7",
     "ethers": "^5.7.2",
-    "solc": "^0.8.19",
+    "hardhat": "^2.17.0"
+  },
+  "dependencies": {
     "dotenv": "^16.3.1"
   }
 }
